@@ -1,4 +1,4 @@
-<h1>AĞ TEMELLERİ VİZE HAZIRLIK REHBERİ</h1>
+<h1>AĞ TEMELLERİ ÇALIŞMA REHBERİ</h1>
 
 <div class="section">
 <h2>1. BÖLÜM: VERİ HABERLEŞMESİNE GİRİŞ</h2>
