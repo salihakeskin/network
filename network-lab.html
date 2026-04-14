@@ -50,6 +50,7 @@
         <div style="margin-top:auto; padding-top:10px; border-top:1px solid #334155;">
             <button id="run-btn" class="lab-btn" style="background:#04AA6D; width:100%; text-align:center;" onclick="startSimulation()">SİMÜLASYONU ÇALIŞTIR ▶</button>
         </div>
+        <button class="lab-btn" style="background:#6c5ce7; margin-top:10px;" onclick="loadSandbox()">🛠 Sandbox (Kendi Ağını Kur)</button>
     </div>
 
     <div class="canvas-area">
@@ -226,6 +227,194 @@
 
     window.onload = () => loadLab(1);
 </script>
+<script>
+    // --- SANDBOX MANTIĞI VE BAĞLANTI KONTROLÜ ---
+let isSandbox = false;
+let sandboxNodes = [];
+let sandboxLinks = []; // Örn: [['pc1', 'sw1'], ['sw1', 'pc2']]
+let selectedNodeId = null;
 
+function loadSandbox() {
+    isSandbox = true;
+    const container = document.getElementById('network-canvas');
+    const svg = document.getElementById('svg-canvas');
+    
+    // Temizlik ve Arayüz
+    container.innerHTML = `
+        <div id="sandbox-tools" style="position:absolute; top:10px; left:10px; z-index:100; background:rgba(15, 23, 42, 0.8); padding:10px; border-radius:8px; display:flex; gap:10px; border:1px solid #334155;">
+            <button class="lab-btn" onclick="addCustomDevice('pc')">💻 PC Ekle</button>
+            <button class="lab-btn" onclick="addCustomDevice('switch')">🔌 Switch Ekle</button>
+            <button class="lab-btn" onclick="addCustomDevice('router')">🌐 Router Ekle</button>
+            <button class="lab-btn" style="background:#9E0B2D" onclick="loadSandbox()">🗑 Temizle</button>
+        </div>`;
+    svg.innerHTML = "";
+    sandboxNodes = [];
+    sandboxLinks = [];
+    logMessage("Sandbox Modu Aktif: Cihazları ekleyin ve birbirine bağlamak için üzerlerine tıklayın.");
+}
+
+function addCustomDevice(type) {
+    const id = type + "_" + Math.random().toString(36).substr(2, 4);
+    const newNode = {
+        id: id,
+        type: type,
+        label: type.toUpperCase() + "-" + (sandboxNodes.length + 1),
+        ip: type !== 'switch' ? `192.168.1.${sandboxNodes.filter(n=>n.type!=='switch').length + 10}` : '',
+        x: 150,
+        y: 150
+    };
+    sandboxNodes.push(newNode);
+    renderDevice(newNode);
+}
+
+function renderDevice(node) {
+    const container = document.getElementById('network-canvas');
+    const div = document.createElement('div');
+    div.className = 'device';
+    div.id = node.id;
+    div.style.left = node.x + 'px';
+    div.style.top = node.y + 'px';
+    div.innerHTML = `<img src="${icons[node.type]}" style="filter:invert(1); cursor:grab;"><span>${node.label}<br>${node.ip}</span>`;
+
+    // 1. Sürükleme Mantığı
+    div.onmousedown = (e) => {
+        let shiftX = e.clientX - div.getBoundingClientRect().left;
+        let shiftY = e.clientY - div.getBoundingClientRect().top;
+
+        document.onmousemove = (e) => {
+            node.x = e.clientX - container.getBoundingClientRect().left - shiftX;
+            node.y = e.clientY - container.getBoundingClientRect().top - shiftY;
+            div.style.left = node.x + 'px';
+            div.style.top = node.y + 'px';
+            updateLinks();
+        };
+
+        document.onmouseup = () => {
+            document.onmousemove = null;
+            div.onmouseup = null;
+        };
+    };
+
+    // 2. Bağlantı Kurma (Tıklama)
+    div.onclick = () => {
+        if (!selectedNodeId) {
+            selectedNodeId = node.id;
+            div.style.boxShadow = "0 0 15px #fbbf24";
+            logMessage(`Kaynak seçildi: ${node.label}. Bağlanacak hedef cihazı seçin.`);
+        } else if (selectedNodeId === node.id) {
+            selectedNodeId = null;
+            div.style.boxShadow = "none";
+        } else {
+            // Bağlantıyı ekle
+            if (!sandboxLinks.some(l => (l[0] === selectedNodeId && l[1] === node.id) || (l[1] === selectedNodeId && l[0] === node.id))) {
+                sandboxLinks.push([selectedNodeId, node.id]);
+                updateLinks();
+                logMessage(`Bağlantı kuruldu: ${selectedNodeId} <-> ${node.id}`);
+            }
+            document.getElementById(selectedNodeId).style.boxShadow = "none";
+            selectedNodeId = null;
+        }
+    };
+
+    // 3. Ping Atma (Çift Tıklama)
+    div.ondblclick = () => {
+        if (node.type === 'switch') return;
+        const targetIp = prompt(`${node.label} üzerinden ping atılacak hedef IP:`);
+        if (targetIp) executePing(node, targetIp);
+    };
+
+    container.appendChild(div);
+}
+
+function updateLinks() {
+    const svg = document.getElementById('svg-canvas');
+    svg.innerHTML = "";
+    sandboxLinks.forEach(link => {
+        const n1 = sandboxNodes.find(n => n.id === link[0]);
+        const n2 = sandboxNodes.find(n => n.id === link[1]);
+        const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        line.setAttribute("x1", n1.x + 35); line.setAttribute("y1", n1.y + 25);
+        line.setAttribute("x2", n2.x + 35); line.setAttribute("y2", n2.y + 25);
+        line.style.stroke = "#475569";
+        line.style.strokeWidth = "2";
+        svg.appendChild(line);
+    });
+}
+
+// --- PING VE YOL BULMA ALGORİTMASI ---
+function executePing(sourceNode, targetIp) {
+    const targetNode = sandboxNodes.find(n => n.ip === targetIp);
+    
+    if (!targetNode) {
+        logMessage(`HATA: ${targetIp} adresine ulaşılamıyor. (Cihaz yok)`, "#ef4444");
+        return;
+    }
+
+    // BFS Algoritması ile yol kontrolü
+    const path = findPath(sourceNode.id, targetNode.id);
+
+    if (path) {
+        logMessage(`${sourceNode.label} -> ${targetIp} ping gönderiliyor...`);
+        animatePacketPath(path);
+    } else {
+        logMessage(`HATA: ${sourceNode.label} ile ${targetNode.label} arasında fiziksel bağlantı yok!`, "#ef4444");
+    }
+}
+
+function findPath(startId, endId) {
+    let queue = [[startId]];
+    let visited = new Set();
+
+    while (queue.length > 0) {
+        let path = queue.shift();
+        let node = path[path.length - 1];
+
+        if (node === endId) return path;
+
+        if (!visited.has(node)) {
+            visited.add(node);
+            let neighbors = sandboxLinks
+                .filter(l => l.includes(node))
+                .map(l => l[0] === node ? l[1] : l[0]);
+
+            for (let neighbor of neighbors) {
+                let newPath = [...path, neighbor];
+                queue.push(newPath);
+            }
+        }
+    }
+    return null; // Yol bulunamadı
+}
+
+async function animatePacketPath(path) {
+    const packet = document.getElementById('packet');
+    packet.style.display = "block";
+
+    for (let i = 0; i < path.length - 1; i++) {
+        const start = sandboxNodes.find(n => n.id === path[i]);
+        const end = sandboxNodes.find(n => n.id === path[i+1]);
+
+        packet.style.transition = "none";
+        packet.style.left = (start.x + 30) + "px";
+        packet.style.top = (start.y + 20) + "px";
+
+        await new Promise(r => setTimeout(r, 50));
+        packet.style.transition = "all 0.6s linear";
+        packet.style.left = (end.x + 30) + "px";
+        packet.style.top = (end.y + 20) + "px";
+        
+        await new Promise(r => setTimeout(r, 650));
+    }
+
+    logMessage(`BAŞARILI: ${path[path.length-1]} yanıt verdi.`, "#10b981");
+    packet.style.display = "none";
+}
+
+function logMessage(msg, color = "#10b981") {
+    const log = document.getElementById('log');
+    log.innerHTML += `<div style="color:${color}"><span style="color:#94a3b8">[${new Date().toLocaleTimeString()}]</span> ${msg}</div>`;
+    log.scrollTop = log.scrollHeight;
+}
+</script>
 </body>
 </html>
