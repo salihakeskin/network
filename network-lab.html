@@ -120,6 +120,18 @@
             links: [['phone', 'ap1', 'wireless'], ['laptop', 'ap1', 'wireless'], ['ap1', 'modem']],
             flow: ['phone', 'ap1', 'modem'],
             msgs: ["Mobile: WiFi üzerinden paket gönderildi.", "AP: Veri kablolu hatta çevriliyor...", "Modem: İnternet isteği dış ağa aktarıldı."]
+        },
+        5: {
+            name: "Level 5: Network Firewall (Güvenlik)",
+            desc: "Firewall, gelen paketleri kurallara göre denetler. Zararlı veya izinsiz paketlerin iç ağa girmesini engeller.",
+            devices: [
+                { id: 'hacker', type: 'pc', label: 'Dış Ağ (Hacker)', x: 50, y: 190 },
+                { id: 'fw1', type: 'firewall', label: 'Firewall', x: 300, y: 190 },
+                { id: 'srv1', type: 'server', label: 'İç Sunucu', x: 550, y: 190 }
+            ],
+            links: [['hacker', 'fw1'], ['fw1', 'srv1']],
+            flow: ['hacker', 'fw1', 'drop'], // 'drop' özel bir durumdur, koda ekleyeceğiz
+            msgs: ["Dış Ağ: Sunucuya sızma isteği gönderildi.", "Firewall: Paket inceleniyor (Deep Packet Inspection)...", "ENGELLENDİ: Kural 102 - Geçersiz port erişimi reddedildi!"]
         }
     };
 
