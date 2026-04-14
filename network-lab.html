@@ -5,57 +5,51 @@
     <title>Gelişmiş Ağ Akademisi</title>
     <style>
         :root { --main: #9E0B2D; --bg: #0f172a; --panel: #1e293b; --text: #f8fafc; }
-        body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); display: flex; flex-direction: column; height: 100vh; }
+        body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
         
-        /* Navigasyon */
-        .navbar { background: var(--main); padding: 15px 25px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
-        
+        .navbar { background: var(--main); padding: 12px 25px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 10px rgba(0,0,0,0.3); z-index: 100; }
         .main-container { display: flex; flex: 1; overflow: hidden; }
 
-        /* Sol Menü */
-        .sidebar { width: 280px; background: var(--panel); border-right: 1px solid #334155; padding: 20px; display: flex; flex-direction: column; gap: 10px; }
-        .sidebar h3 { font-size: 0.9rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
-        .lab-btn { background: #334155; border: 1px solid #475569; color: white; padding: 12px; border-radius: 6px; cursor: pointer; text-align: left; transition: 0.3s; font-size: 0.9rem; }
+        .sidebar { width: 260px; background: var(--panel); border-right: 1px solid #334155; padding: 15px; display: flex; flex-direction: column; gap: 8px; z-index: 90; }
+        .sidebar h3 { font-size: 0.8rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
+        .lab-btn { background: #334155; border: 1px solid #475569; color: white; padding: 10px; border-radius: 6px; cursor: pointer; text-align: left; transition: 0.3s; font-size: 0.85rem; }
         .lab-btn:hover { background: #475569; border-color: var(--main); }
         .lab-btn.active { background: var(--main); border-color: white; font-weight: bold; }
 
-        /* Simülasyon Alanı */
-        .canvas-area { flex: 1; position: relative; background: radial-gradient(circle, #1e293b 1px, transparent 1px); background-size: 40px 40px; }
+        /* Simülasyon Alanı - Cihazların Göründüğü Yer */
+        .canvas-area { flex: 1; position: relative; background: radial-gradient(circle, #1e293b 1px, transparent 1px); background-size: 40px 40px; overflow: hidden; }
         #network-canvas { width: 100%; height: 100%; position: relative; }
         svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; }
-        line { stroke: #475569; stroke-width: 2; stroke-dasharray: 4; }
-        line.active { stroke: #fbbf24; stroke-width: 3; stroke-dasharray: 0; }
+        line { stroke: #475569; stroke-width: 2; stroke-dasharray: 4; transition: 0.3s; }
 
-        /* Cihazlar */
         .device { position: absolute; width: 70px; text-align: center; z-index: 10; transition: 0.3s; }
         .device img { width: 45px; filter: drop-shadow(0 0 8px rgba(255,255,255,0.2)); }
-        .device span { display: block; font-size: 11px; margin-top: 5px; color: #cbd5e1; }
+        .device span { display: block; font-size: 11px; margin-top: 5px; color: #cbd5e1; font-weight: 500; }
 
-        /* Paket Animasyonu */
         .packet { position: absolute; width: 12px; height: 12px; background: #fbbf24; border-radius: 50%; box-shadow: 0 0 15px #fbbf24; z-index: 50; display: none; }
 
-        /* Alt Panel (Log) */
-        .footer { height: 180px; background: #020617; border-top: 2px solid var(--main); display: flex; padding: 10px; gap: 15px; }
-        .terminal { flex: 1; font-family: 'Consolas', monospace; font-size: 13px; color: #10b981; overflow-y: auto; padding: 10px; line-height: 1.4; }
-        .info-card { width: 300px; background: var(--panel); border-radius: 6px; padding: 15px; font-size: 0.85rem; }
+        .footer { height: 160px; background: #020617; border-top: 2px solid var(--main); display: flex; padding: 10px; gap: 15px; z-index: 100; }
+        .terminal { flex: 1; font-family: 'Consolas', monospace; font-size: 12px; color: #10b981; overflow-y: auto; padding: 8px; border-radius: 4px; background: #000; }
+        .info-card { width: 280px; background: var(--panel); border-radius: 6px; padding: 12px; font-size: 0.8rem; line-height: 1.4; }
     </style>
 </head>
 <body>
 
 <div class="navbar">
-    <div>AĞ AKADEMİSİ | İnteraktif Simülatör</div>
-    <div style="font-size: 0.8rem; opacity: 0.8;" id="current-lab-name">Seviye 1: Local Network</div>
+    <div style="font-size: 1.1rem; font-weight: 800;">AĞ AKADEMİSİ</div>
+    <div id="current-lab-name" style="font-size: 0.85rem; color: #fbbf24;">Level 1: Local Network</div>
 </div>
 
 <div class="main-container">
     <div class="sidebar">
-        <h3>Senaryolar</h3>
-        <button class="lab-btn active" onclick="loadLab(1, this)">1. Switch (Yerel Ağ)</button>
-        <button class="lab-btn" onclick="loadLab(2, this)">2. Router (Farklı Ağlar)</button>
+        <h3>Eğitim Modülleri</h3>
+        <button class="lab-btn active" onclick="loadLab(1, this)">1. Switch (LAN)</button>
+        <button class="lab-btn" onclick="loadLab(2, this)">2. Router (WAN)</button>
         <button class="lab-btn" onclick="loadLab(3, this)">3. Web Server (HTTP)</button>
-        <button class="lab-btn" onclick="loadLab(4, this)">4. Access Point (Kablosuz)</button>
-        <hr style="width:100%; border:0; border-top:1px solid #334155; margin:10px 0;">
-        <button id="run-btn" class="lab-btn" style="background:#04AA6D; text-align:center;" onclick="startSimulation()">Simülasyonu Başlat ▶</button>
+        <button class="lab-btn" onclick="loadLab(4, this)">4. Access Point (WiFi)</button>
+        <div style="margin-top:auto; padding-top:10px; border-top:1px solid #334155;">
+            <button id="run-btn" class="lab-btn" style="background:#04AA6D; width:100%; text-align:center;" onclick="startSimulation()">SİMÜLASYONU ÇALIŞTIR ▶</button>
+        </div>
     </div>
 
     <div class="canvas-area">
@@ -67,64 +61,65 @@
 
 <div class="footer">
     <div class="terminal" id="log">
-        [SİSTEM] Modül yüklendi. Bir senaryo seçip 'Simülasyonu Başlat' butonuna tıklayın.
+        [SİSTEM] Modül hazır. Bir senaryo seçip başlatın...
     </div>
     <div class="info-card" id="description">
-        <b>Senaryo Hakkında:</b><br>
-        L2 Switch kullanarak cihazların MAC adresleri üzerinden iletişimini gözlemleyin.
+        <b>Senaryo Özeti:</b><br>
+        Cihazların bir Switch üzerinden haberleşmesini izleyin.
     </div>
 </div>
 
 <script>
+    // Konumlar (x, y) yukarı taşındı (y değerleri küçültüldü)
     const labs = {
         1: {
-            name: "Level 1: Switch & Local Network",
-            desc: "Switch, kendisine bağlı cihazların MAC tablosunu tutar. Veriyi sadece ilgili porta gönderir.",
+            name: "Level 1: Local Network (Switch)",
+            desc: "Switch cihazı, gelen paketi sadece hedefin olduğu porta yönlendirerek ağ trafiğini optimize eder.",
             devices: [
-                { id: 'pc1', type: 'pc', label: 'PC-A (192.168.1.5)', x: 100, y: 150 },
-                { id: 'pc2', type: 'pc', label: 'PC-B (192.168.1.10)', x: 100, y: 350 },
-                { id: 'sw1', type: 'switch', label: 'L2 Switch', x: 400, y: 250 }
+                { id: 'pc1', type: 'pc', label: 'PC-A', x: 80, y: 100 },
+                { id: 'pc2', type: 'pc', label: 'PC-B', x: 80, y: 280 },
+                { id: 'sw1', type: 'switch', label: 'L2 Switch', x: 350, y: 190 }
             ],
             links: [['pc1', 'sw1'], ['pc2', 'sw1']],
             flow: ['pc1', 'sw1', 'pc2', 'sw1', 'pc1'],
-            msgs: ["PC-A: ARP isteği gönderiliyor...", "Switch: Mac tablosu kontrol ediliyor...", "PC-B: Paket alındı, yanıt veriliyor.", "Başarılı: Yerel ağ bağlantısı sağlandı."]
+            msgs: ["PC-A: Paket Switch'e gönderiliyor...", "Switch: MAC tablosuna bakılıyor...", "PC-B: Paket alındı, onay dönülüyor.", "İşlem Tamam: LAN trafiği başarılı."]
         },
         2: {
-            name: "Level 2: Router & Routing Table",
-            desc: "Router farklı IP bloklarını birbirine bağlar. Paketler Gateway (Ağ geçidi) üzerinden geçer.",
+            name: "Level 2: Routing (Router)",
+            desc: "Farklı ağlardaki (Subnet) cihazlar bir Router aracılığıyla haberleşir. Router, IP adreslerini kontrol eder.",
             devices: [
-                { id: 'pc1', type: 'pc', label: 'Ağı 192.168.1.x', x: 50, y: 250 },
-                { id: 'rt1', type: 'router', label: 'Gateway Router', x: 350, y: 250 },
-                { id: 'pc2', type: 'pc', label: 'Ağı 10.0.0.x', x: 650, y: 250 }
+                { id: 'pc1', type: 'pc', label: '192.168.1.5', x: 50, y: 190 },
+                { id: 'rt1', type: 'router', label: 'Router', x: 300, y: 190 },
+                { id: 'pc2', type: 'pc', label: '10.0.0.10', x: 550, y: 190 }
             ],
             links: [['pc1', 'rt1'], ['pc2', 'rt1']],
             flow: ['pc1', 'rt1', 'pc2'],
-            msgs: ["Kaynak: 192.168.1.5", "Router: Hedef 10.0.0.2. Routing tablosuna bakılıyor...", "Yönlendirme: Paket diğer ağa aktarıldı."]
+            msgs: ["PC-A: Gateway'e paket gönderiliyor...", "Router: Hedef ağ kontrol ediliyor...", "Yönlendirme: Paket 10.0.0.x ağına iletildi."]
         },
         3: {
-            name: "Level 3: Web Server & DNS",
-            desc: "İstemci, Server'a HTTP isteği gönderir. Server 80 portundan yanıt döner.",
+            name: "Level 3: Web & HTTP (Server)",
+            desc: "İstemci tarayıcı üzerinden bir istek (Request) gönderir ve sunucudan yanıt (Response) alır.",
             devices: [
-                { id: 'pc1', type: 'pc', label: 'Client (PC)', x: 100, y: 250 },
-                { id: 'sw1', type: 'switch', label: 'Ağ Omurgası', x: 400, y: 250 },
-                { id: 'srv1', type: 'server', label: 'Web Server (halilce.com)', x: 700, y: 250 }
+                { id: 'pc1', type: 'pc', label: 'Client', x: 80, y: 190 },
+                { id: 'sw1', type: 'switch', label: 'Ağ', x: 320, y: 190 },
+                { id: 'srv1', type: 'server', label: 'Web Server', x: 560, y: 190 }
             ],
             links: [['pc1', 'sw1'], ['srv1', 'sw1']],
             flow: ['pc1', 'sw1', 'srv1', 'sw1', 'pc1'],
-            msgs: ["GET /index.html HTTP/1.1", "Switch: Paket hedefe iletiliyor...", "Server: HTTP 200 OK yanıtı hazırlandı.", "Web sayfası yüklendi."]
+            msgs: ["Client: HTTP GET isteği gönderildi.", "Switch: Veri sunucu yolunda...", "Server: HTTP 200 OK yanıtı dönüyor.", "Web sayfası başarıyla yüklendi."]
         },
         4: {
-            name: "Level 4: Wireless Access Point",
-            desc: "Kablosuz cihazlar SSID üzerinden AP'ye bağlanır. Fiziksel kablo yerine radyo sinyalleri kullanılır.",
+            name: "Level 4: Wireless (Access Point)",
+            desc: "Kablosuz cihazlar radyo dalgalarıyla AP'ye bağlanır. AP ise bu veriyi kablolu ağa aktarır.",
             devices: [
-                { id: 'phone', type: 'phone', label: 'Akıllı Telefon', x: 100, y: 150 },
-                { id: 'laptop', type: 'pc', label: 'Laptop', x: 100, y: 350 },
-                { id: 'ap1', type: 'ap', label: 'Cisco AP (WiFi)', x: 450, y: 250 },
-                { id: 'modem', type: 'router', label: 'Main Modem', x: 700, y: 250 }
+                { id: 'phone', type: 'phone', label: 'Mobile', x: 60, y: 100 },
+                { id: 'laptop', type: 'pc', label: 'Laptop', x: 60, y: 280 },
+                { id: 'ap1', type: 'ap', label: 'AP', x: 300, y: 190 },
+                { id: 'modem', type: 'router', label: 'Modem', x: 550, y: 190 }
             ],
             links: [['phone', 'ap1', 'wireless'], ['laptop', 'ap1', 'wireless'], ['ap1', 'modem']],
             flow: ['phone', 'ap1', 'modem'],
-            msgs: ["Phone: WiFi sinyali ile paketi gönderiyor...", "AP: Kablosuz veriyi kablolu ağa çeviriyor.", "Modem: İnternet çıkışı yapılıyor."]
+            msgs: ["Mobile: WiFi üzerinden paket gönderildi.", "AP: Veri kablolu hatta çevriliyor...", "Modem: İnternet isteği dış ağa aktarıldı."]
         }
     };
 
@@ -145,8 +140,8 @@
         
         const lab = labs[id];
         document.getElementById('current-lab-name').innerText = lab.name;
-        document.getElementById('description').innerHTML = `<b>Senaryo Hakkında:</b><br>${lab.desc}`;
-        document.getElementById('log').innerHTML = `[SİSTEM] ${lab.name} hazır.`;
+        document.getElementById('description').innerHTML = `<b>Senaryo Özeti:</b><br>${lab.desc}`;
+        document.getElementById('log').innerHTML = `[SİSTEM] ${lab.name} yüklendi.`;
         
         renderCanvas(lab);
     }
@@ -157,7 +152,6 @@
         container.innerHTML = "";
         svg.innerHTML = "";
 
-        // Cihazları çiz
         lab.devices.forEach(d => {
             const div = document.createElement('div');
             div.className = 'device';
@@ -168,7 +162,6 @@
             container.appendChild(div);
         });
 
-        // Bağlantıları çiz
         lab.links.forEach(l => {
             const d1 = lab.devices.find(x => x.id === l[0]);
             const d2 = lab.devices.find(x => x.id === l[1]);
@@ -177,7 +170,7 @@
             line.setAttribute("y1", d1.y + 25);
             line.setAttribute("x2", d2.x + 35);
             line.setAttribute("y2", d2.y + 25);
-            if(l[2] === 'wireless') line.style.strokeDasharray = "2,10";
+            if(l[2] === 'wireless') line.style.strokeDasharray = "2,8";
             svg.appendChild(line);
         });
     }
@@ -186,15 +179,16 @@
         const lab = labs[currentLabId];
         const packet = document.getElementById('packet');
         const log = document.getElementById('log');
+        const runBtn = document.getElementById('run-btn');
         
-        document.getElementById('run-btn').disabled = true;
+        runBtn.disabled = true;
         log.innerHTML = "";
 
         for (let i = 0; i < lab.flow.length - 1; i++) {
             const startNode = document.getElementById(lab.flow[i]);
             const endNode = document.getElementById(lab.flow[i+1]);
             
-            if(lab.msgs[i]) log.innerHTML += `> ${lab.msgs[i]}<br>`;
+            if(lab.msgs[i]) log.innerHTML += `<span style="color:#fbbf24">></span> ${lab.msgs[i]}<br>`;
             log.scrollTop = log.scrollHeight;
 
             const sPos = { x: parseInt(startNode.style.left) + 30, y: parseInt(startNode.style.top) + 20 };
@@ -206,19 +200,18 @@
             packet.style.top = sPos.y + "px";
 
             await new Promise(r => setTimeout(r, 100));
-            packet.style.transition = "all 1.2s cubic-bezier(0.4, 0, 0.2, 1)";
+            packet.style.transition = "all 1s ease-in-out";
             packet.style.left = ePos.x + "px";
             packet.style.top = ePos.y + "px";
 
-            await new Promise(r => setTimeout(r, 1300));
+            await new Promise(r => setTimeout(r, 1100));
         }
 
-        log.innerHTML += `<b style="color:yellow">> [OK] Simülasyon başarıyla tamamlandı.</b><br>`;
+        log.innerHTML += `<b style="color:#04AA6D">> Akış başarıyla tamamlandı.</b><br>`;
         packet.style.display = "none";
-        document.getElementById('run-btn').disabled = false;
+        runBtn.disabled = false;
     }
 
-    // İlk yükleme
     window.onload = () => loadLab(1);
 </script>
 
