@@ -2,145 +2,224 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <title>Görsel Ağ Simülasyonu</title>
+    <title>Gelişmiş Ağ Akademisi</title>
     <style>
-        :root { --main: #9E0B2D; --bg: #0f172a; --line: #334155; }
-        body { margin: 0; background: var(--bg); color: white; font-family: 'Segoe UI', sans-serif; overflow: hidden; }
+        :root { --main: #9E0B2D; --bg: #0f172a; --panel: #1e293b; --text: #f8fafc; }
+        body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); display: flex; flex-direction: column; height: 100vh; }
         
-        .header { background: var(--main); padding: 15px; text-align: center; font-weight: bold; font-size: 1.2rem; }
+        /* Navigasyon */
+        .navbar { background: var(--main); padding: 15px 25px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
         
+        .main-container { display: flex; flex: 1; overflow: hidden; }
+
+        /* Sol Menü */
+        .sidebar { width: 280px; background: var(--panel); border-right: 1px solid #334155; padding: 20px; display: flex; flex-direction: column; gap: 10px; }
+        .sidebar h3 { font-size: 0.9rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
+        .lab-btn { background: #334155; border: 1px solid #475569; color: white; padding: 12px; border-radius: 6px; cursor: pointer; text-align: left; transition: 0.3s; font-size: 0.9rem; }
+        .lab-btn:hover { background: #475569; border-color: var(--main); }
+        .lab-btn.active { background: var(--main); border-color: white; font-weight: bold; }
+
         /* Simülasyon Alanı */
-        #network-canvas { width: 100vw; height: 70vh; position: relative; background: radial-gradient(circle, #1e293b 1px, transparent 1px); background-size: 30px 30px; }
-
-        .device { position: absolute; width: 80px; text-align: center; cursor: pointer; transition: 0.3s; z-index: 10; }
-        .device:hover { transform: scale(1.1); }
-        .device img { width: 50px; display: block; margin: 0 auto; filter: drop-shadow(0 0 5px rgba(255,255,255,0.3)); }
-        .device span { font-size: 12px; display: block; margin-top: 5px; background: rgba(0,0,0,0.5); border-radius: 4px; }
-
-        /* Kablo Çizgileri */
+        .canvas-area { flex: 1; position: relative; background: radial-gradient(circle, #1e293b 1px, transparent 1px); background-size: 40px 40px; }
+        #network-canvas { width: 100%; height: 100%; position: relative; }
         svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; }
-        line { stroke: var(--line); stroke-width: 3; stroke-dasharray: 5; animation: dash 5s linear infinite; }
-        @keyframes dash { to { stroke-dashoffset: 50; } }
+        line { stroke: #475569; stroke-width: 2; stroke-dasharray: 4; }
+        line.active { stroke: #fbbf24; stroke-width: 3; stroke-dasharray: 0; }
 
-        /* Veri Paketi Animasyonu */
-        .packet { position: absolute; width: 15px; height: 15px; background: #fbbf24; border-radius: 50%; box-shadow: 0 0 10px #fbbf24; z-index: 20; display: none; }
+        /* Cihazlar */
+        .device { position: absolute; width: 70px; text-align: center; z-index: 10; transition: 0.3s; }
+        .device img { width: 45px; filter: drop-shadow(0 0 8px rgba(255,255,255,0.2)); }
+        .device span { display: block; font-size: 11px; margin-top: 5px; color: #cbd5e1; }
 
-        /* Kontrol Paneli */
-        .controls { height: 20vh; background: #1e293b; padding: 20px; display: flex; gap: 20px; border-top: 2px solid var(--main); }
-        .log-area { flex: 1; background: #000; padding: 10px; font-family: monospace; font-size: 13px; color: #00ff00; overflow-y: auto; border-radius: 5px; }
-        .btn { background: var(--main); color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; height: fit-content; font-weight: bold; }
-        .btn:hover { background: #7a0822; }
+        /* Paket Animasyonu */
+        .packet { position: absolute; width: 12px; height: 12px; background: #fbbf24; border-radius: 50%; box-shadow: 0 0 15px #fbbf24; z-index: 50; display: none; }
+
+        /* Alt Panel (Log) */
+        .footer { height: 180px; background: #020617; border-top: 2px solid var(--main); display: flex; padding: 10px; gap: 15px; }
+        .terminal { flex: 1; font-family: 'Consolas', monospace; font-size: 13px; color: #10b981; overflow-y: auto; padding: 10px; line-height: 1.4; }
+        .info-card { width: 300px; background: var(--panel); border-radius: 6px; padding: 15px; font-size: 0.85rem; }
     </style>
 </head>
 <body>
 
-<div class="header">İnteraktif Ağ Topolojisi Simülatörü</div>
+<div class="navbar">
+    <div>AĞ AKADEMİSİ | İnteraktif Simülatör</div>
+    <div style="font-size: 0.8rem; opacity: 0.8;" id="current-lab-name">Seviye 1: Local Network</div>
+</div>
 
-<div id="network-canvas">
-    <svg id="svg-canvas"></svg>
-    <div id="packet" class="packet"></div>
-
-    <div class="device" style="top:250px; left:100px;" id="pc1" onclick="selectDevice('pc1')">
-        <img src="https://cdn-icons-png.flaticon.com/512/3067/3067260.png" style="filter: invert(1);">
-        <span>PC-A (192.168.1.5)</span>
+<div class="main-container">
+    <div class="sidebar">
+        <h3>Senaryolar</h3>
+        <button class="lab-btn active" onclick="loadLab(1, this)">1. Switch (Yerel Ağ)</button>
+        <button class="lab-btn" onclick="loadLab(2, this)">2. Router (Farklı Ağlar)</button>
+        <button class="lab-btn" onclick="loadLab(3, this)">3. Web Server (HTTP)</button>
+        <button class="lab-btn" onclick="loadLab(4, this)">4. Access Point (Kablosuz)</button>
+        <hr style="width:100%; border:0; border-top:1px solid #334155; margin:10px 0;">
+        <button id="run-btn" class="lab-btn" style="background:#04AA6D; text-align:center;" onclick="startSimulation()">Simülasyonu Başlat ▶</button>
     </div>
 
-    <div class="device" style="top:250px; left:450px;" id="switch">
-        <img src="https://cdn-icons-png.flaticon.com/512/2885/2885417.png" style="filter: invert(1);">
-        <span>L2-Switch</span>
-    </div>
-
-    <div class="device" style="top:100px; left:800px;" id="pc2" onclick="selectDevice('pc2')">
-        <img src="https://cdn-icons-png.flaticon.com/512/3067/3067260.png" style="filter: invert(1);">
-        <span>PC-B (192.168.1.10)</span>
-    </div>
-
-    <div class="device" style="top:400px; left:800px;" id="server" onclick="selectDevice('server')">
-        <img src="https://cdn-icons-png.flaticon.com/512/2333/2333246.png" style="filter: invert(1);">
-        <span>Web-Server (1.1.1.1)</span>
+    <div class="canvas-area">
+        <svg id="svg-canvas"></svg>
+        <div id="network-canvas"></div>
+        <div id="packet" class="packet"></div>
     </div>
 </div>
 
-<div class="controls">
-    <div style="display:flex; flex-direction:column; gap:10px;">
-        <button class="btn" onclick="sendPing()">Ping Gönder (PC-A -> PC-B)</button>
-        <button class="btn" style="background:#04AA6D" onclick="location.reload()">Sıfırla</button>
+<div class="footer">
+    <div class="terminal" id="log">
+        [SİSTEM] Modül yüklendi. Bir senaryo seçip 'Simülasyonu Başlat' butonuna tıklayın.
     </div>
-    <div class="log-area" id="log">
-        [Sistem] Simülasyon hazır. Bir işlem seçin...<br>
+    <div class="info-card" id="description">
+        <b>Senaryo Hakkında:</b><br>
+        L2 Switch kullanarak cihazların MAC adresleri üzerinden iletişimini gözlemleyin.
     </div>
 </div>
 
 <script>
-    const log = document.getElementById('log');
-    const packet = document.getElementById('packet');
+    const labs = {
+        1: {
+            name: "Level 1: Switch & Local Network",
+            desc: "Switch, kendisine bağlı cihazların MAC tablosunu tutar. Veriyi sadece ilgili porta gönderir.",
+            devices: [
+                { id: 'pc1', type: 'pc', label: 'PC-A (192.168.1.5)', x: 100, y: 150 },
+                { id: 'pc2', type: 'pc', label: 'PC-B (192.168.1.10)', x: 100, y: 350 },
+                { id: 'sw1', type: 'switch', label: 'L2 Switch', x: 400, y: 250 }
+            ],
+            links: [['pc1', 'sw1'], ['pc2', 'sw1']],
+            flow: ['pc1', 'sw1', 'pc2', 'sw1', 'pc1'],
+            msgs: ["PC-A: ARP isteği gönderiliyor...", "Switch: Mac tablosu kontrol ediliyor...", "PC-B: Paket alındı, yanıt veriliyor.", "Başarılı: Yerel ağ bağlantısı sağlandı."]
+        },
+        2: {
+            name: "Level 2: Router & Routing Table",
+            desc: "Router farklı IP bloklarını birbirine bağlar. Paketler Gateway (Ağ geçidi) üzerinden geçer.",
+            devices: [
+                { id: 'pc1', type: 'pc', label: 'Ağı 192.168.1.x', x: 50, y: 250 },
+                { id: 'rt1', type: 'router', label: 'Gateway Router', x: 350, y: 250 },
+                { id: 'pc2', type: 'pc', label: 'Ağı 10.0.0.x', x: 650, y: 250 }
+            ],
+            links: [['pc1', 'rt1'], ['pc2', 'rt1']],
+            flow: ['pc1', 'rt1', 'pc2'],
+            msgs: ["Kaynak: 192.168.1.5", "Router: Hedef 10.0.0.2. Routing tablosuna bakılıyor...", "Yönlendirme: Paket diğer ağa aktarıldı."]
+        },
+        3: {
+            name: "Level 3: Web Server & DNS",
+            desc: "İstemci, Server'a HTTP isteği gönderir. Server 80 portundan yanıt döner.",
+            devices: [
+                { id: 'pc1', type: 'pc', label: 'Client (PC)', x: 100, y: 250 },
+                { id: 'sw1', type: 'switch', label: 'Ağ Omurgası', x: 400, y: 250 },
+                { id: 'srv1', type: 'server', label: 'Web Server (halilce.com)', x: 700, y: 250 }
+            ],
+            links: [['pc1', 'sw1'], ['srv1', 'sw1']],
+            flow: ['pc1', 'sw1', 'srv1', 'sw1', 'pc1'],
+            msgs: ["GET /index.html HTTP/1.1", "Switch: Paket hedefe iletiliyor...", "Server: HTTP 200 OK yanıtı hazırlandı.", "Web sayfası yüklendi."]
+        },
+        4: {
+            name: "Level 4: Wireless Access Point",
+            desc: "Kablosuz cihazlar SSID üzerinden AP'ye bağlanır. Fiziksel kablo yerine radyo sinyalleri kullanılır.",
+            devices: [
+                { id: 'phone', type: 'phone', label: 'Akıllı Telefon', x: 100, y: 150 },
+                { id: 'laptop', type: 'pc', label: 'Laptop', x: 100, y: 350 },
+                { id: 'ap1', type: 'ap', label: 'Cisco AP (WiFi)', x: 450, y: 250 },
+                { id: 'modem', type: 'router', label: 'Main Modem', x: 700, y: 250 }
+            ],
+            links: [['phone', 'ap1', 'wireless'], ['laptop', 'ap1', 'wireless'], ['ap1', 'modem']],
+            flow: ['phone', 'ap1', 'modem'],
+            msgs: ["Phone: WiFi sinyali ile paketi gönderiyor...", "AP: Kablosuz veriyi kablolu ağa çeviriyor.", "Modem: İnternet çıkışı yapılıyor."]
+        }
+    };
 
-    // Kabloları Çiz
-    function drawWires() {
+    let currentLabId = 1;
+    const icons = {
+        pc: 'https://cdn-icons-png.flaticon.com/512/3067/3067260.png',
+        switch: 'https://cdn-icons-png.flaticon.com/512/2885/2885417.png',
+        router: 'https://cdn-icons-png.flaticon.com/512/262/262334.png',
+        server: 'https://cdn-icons-png.flaticon.com/512/2333/2333246.png',
+        ap: 'https://cdn-icons-png.flaticon.com/512/9132/9132644.png',
+        phone: 'https://cdn-icons-png.flaticon.com/512/254/254638.png'
+    };
+
+    function loadLab(id, btn) {
+        currentLabId = id;
+        document.querySelectorAll('.lab-btn').forEach(b => b.classList.remove('active'));
+        if(btn) btn.classList.add('active');
+        
+        const lab = labs[id];
+        document.getElementById('current-lab-name').innerText = lab.name;
+        document.getElementById('description').innerHTML = `<b>Senaryo Hakkında:</b><br>${lab.desc}`;
+        document.getElementById('log').innerHTML = `[SİSTEM] ${lab.name} hazır.`;
+        
+        renderCanvas(lab);
+    }
+
+    function renderCanvas(lab) {
+        const container = document.getElementById('network-canvas');
         const svg = document.getElementById('svg-canvas');
-        const connections = [
-            ['pc1', 'switch'],
-            ['pc2', 'switch'],
-            ['server', 'switch']
-        ];
+        container.innerHTML = "";
+        svg.innerHTML = "";
 
-        connections.forEach(conn => {
-            const d1 = document.getElementById(conn[0]).getBoundingClientRect();
-            const d2 = document.getElementById(conn[1]).getBoundingClientRect();
-            
+        // Cihazları çiz
+        lab.devices.forEach(d => {
+            const div = document.createElement('div');
+            div.className = 'device';
+            div.id = d.id;
+            div.style.left = d.x + 'px';
+            div.style.top = d.y + 'px';
+            div.innerHTML = `<img src="${icons[d.type]}" style="filter:invert(1)"><span>${d.label}</span>`;
+            container.appendChild(div);
+        });
+
+        // Bağlantıları çiz
+        lab.links.forEach(l => {
+            const d1 = lab.devices.find(x => x.id === l[0]);
+            const d2 = lab.devices.find(x => x.id === l[1]);
             const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
-            line.setAttribute("x1", d1.left + 40);
-            line.setAttribute("y1", d1.top + 25);
-            line.setAttribute("x2", d2.left + 40);
-            line.setAttribute("y2", d2.top + 25);
+            line.setAttribute("x1", d1.x + 35);
+            line.setAttribute("y1", d1.y + 25);
+            line.setAttribute("x2", d2.x + 35);
+            line.setAttribute("y2", d2.y + 25);
+            if(l[2] === 'wireless') line.style.strokeDasharray = "2,10";
             svg.appendChild(line);
         });
     }
 
-    function addLog(msg) {
-        log.innerHTML += `> ${msg}<br>`;
-        log.scrollTop = log.scrollHeight;
-    }
+    async function startSimulation() {
+        const lab = labs[currentLabId];
+        const packet = document.getElementById('packet');
+        const log = document.getElementById('log');
+        
+        document.getElementById('run-btn').disabled = true;
+        log.innerHTML = "";
 
-    async function animatePacket(startId, endId) {
-        const start = document.getElementById(startId).getBoundingClientRect();
-        const end = document.getElementById(endId).getBoundingClientRect();
-        
-        packet.style.display = "block";
-        packet.style.left = (start.left + 35) + "px";
-        packet.style.top = (start.top + 20) + "px";
+        for (let i = 0; i < lab.flow.length - 1; i++) {
+            const startNode = document.getElementById(lab.flow[i]);
+            const endNode = document.getElementById(lab.flow[i+1]);
+            
+            if(lab.msgs[i]) log.innerHTML += `> ${lab.msgs[i]}<br>`;
+            log.scrollTop = log.scrollHeight;
 
-        await new Promise(r => setTimeout(r, 100));
-        
-        packet.style.transition = "all 1.5s linear";
-        packet.style.left = (end.left + 35) + "px";
-        packet.style.top = (end.top + 20) + "px";
-        
-        return new Promise(r => setTimeout(r, 1500));
-    }
+            const sPos = { x: parseInt(startNode.style.left) + 30, y: parseInt(startNode.style.top) + 20 };
+            const ePos = { x: parseInt(endNode.style.left) + 30, y: parseInt(endNode.style.top) + 20 };
 
-    async function sendPing() {
-        addLog("ICMP Paketi oluşturuluyor...");
-        addLog("Kaynak: 192.168.1.5 (PC-A)");
-        
-        // PC1 -> Switch
-        await animatePacket('pc1', 'switch');
-        addLog("Switch: Mac adresi öğreniliyor, paket yönlendiriliyor...");
-        
-        // Switch -> PC2
-        await animatePacket('switch', 'pc2');
-        addLog("Hedef Ulaştı: PC-B yanıt veriyor (Echo Reply)...");
+            packet.style.display = "block";
+            packet.style.transition = "none";
+            packet.style.left = sPos.x + "px";
+            packet.style.top = sPos.y + "px";
 
-        // Geri Dönüş
-        await animatePacket('pc2', 'switch');
-        await animatePacket('switch', 'pc1');
-        
-        addLog("<span style='color:yellow'>Ping Başarılı: 0% kayıp, Süre: 14ms</span>");
+            await new Promise(r => setTimeout(r, 100));
+            packet.style.transition = "all 1.2s cubic-bezier(0.4, 0, 0.2, 1)";
+            packet.style.left = ePos.x + "px";
+            packet.style.top = ePos.y + "px";
+
+            await new Promise(r => setTimeout(r, 1300));
+        }
+
+        log.innerHTML += `<b style="color:yellow">> [OK] Simülasyon başarıyla tamamlandı.</b><br>`;
         packet.style.display = "none";
-        packet.style.transition = "none";
+        document.getElementById('run-btn').disabled = false;
     }
 
-    window.onload = drawWires;
+    // İlk yükleme
+    window.onload = () => loadLab(1);
 </script>
 
 </body>
